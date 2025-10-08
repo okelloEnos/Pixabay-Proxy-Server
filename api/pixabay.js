@@ -1,8 +1,9 @@
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*')
-    .split(',')
-    .map(o => o.trim());
+// api/pixabay.js  (pure ESM)
+export default async function handler(req, res) {
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*')
+        .split(',')
+        .map(o => o.trim());
 
-module.exports = async (req, res) => {
     const origin = req.headers.origin || '';
     const allow =
         allowedOrigins.includes('*') ||
@@ -10,12 +11,10 @@ module.exports = async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-
     if (allow) {
         res.setHeader('Access-Control-Allow-Origin', origin || '*');
         res.setHeader('Vary', 'Origin');
     }
-
     if (req.method === 'OPTIONS') return res.status(204).end();
 
     const key = process.env.PIXABAY_KEY;
@@ -46,7 +45,6 @@ module.exports = async (req, res) => {
         });
 
         const text = await upstream.text();
-
         try {
             const data = JSON.parse(text);
             res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
@@ -58,6 +56,6 @@ module.exports = async (req, res) => {
     } catch (err) {
         return res
             .status(502)
-            .json({ error: 'Upstream fetch failed', detail: String(err && err.message ? err.message : err) });
+            .json({ error: 'Upstream fetch failed', detail: String(err?.message || err) });
     }
-};
+}
